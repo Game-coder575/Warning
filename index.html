@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экстренное оповещение</title>
+    <style>
+        body {
+            background-color: #990000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            text-align: center;
+            padding: 30px 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.1s ease;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 26px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        .bait-btn {
+            background-color: #ffffff;
+            color: #990000;
+            border: none;
+            padding: 16px 28px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 100%;
+            transition: transform 0.1s ease;
+        }
+        .bait-btn:active {
+            transform: scale(0.96);
+        }
+        .secondary-btn {
+            background-color: #ffcc00;
+            color: #333333;
+            margin-top: 15px;
+        }
+        #timer-container, #post-explosion-screen, #final-contract-screen {
+            display: none;
+        }
+        .timer-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .icon-svg {
+            width: 32px;
+            height: 32px;
+            fill: currentColor;
+            vertical-align: middle;
+        }
+        .final-title {
+            font-size: 32px;
+            color: #ffcc00;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .final-sub {
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Твой локальный файл песни (просто имя файла в той же папке) -->
+    <audio id="final-song" src="song.mp3" preload="auto" loop></audio>
+
+    <div class="container">
+        <!-- Экран с первой байт-кнопкой -->
+        <div id="welcome-screen">
+            <h1>
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                Внимание!
+            </h1>
+            <p>Обнаружена критическая уязвимость системы безопасности устройства. Необходимо срочно подтвердить вашу личность.</p>
+            <button class="bait-btn" onclick="startCountdown()">Пройти верификацию</button>
+        </div>
+
+        <!-- Экран с таймером -->
+        <div id="timer-container">
+            <h1>
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                Внимание!
+            </h1>
+            <div class="timer-text" id="countdown-display">
+                Через <span id="seconds">10</span> секунд твой туз взорвётся
+            </div>
+        </div>
+
+        <!-- Экран после взрыва со второй кнопкой-байтом -->
+        <div id="post-explosion-screen">
+            <div class="final-title">Сбой системы</div>
+            <p>Угроза нейтрализована, но для восстановления полного доступа требуется подтверждение соглашения.</p>
+            <button class="bait-btn secondary-btn" onclick="showContract()">Далее: Получить статус</button>
+        </div>
+
+        <!-- Финальный экран -->
+        <div id="final-contract-screen">
+            <svg class="icon-svg" style="width: 64px; height: 64px; margin-bottom: 15px; color: #ffcc00;" viewBox="0 0 24 24">
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+            </svg>
+            <div class="final-title">Успешно!</div>
+            <div class="final-sub">Вы подписали контракт на СВО</div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx;
+
+        function startCountdown() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('timer-container').style.display = 'block';
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            if (navigator.vibrate) {
+                navigator.vibrate([300, 100, 300, 100, 500]);
+            }
+            playBeep(600, 300);
+
+            let timeLeft = 10;
+            const secondsElement = document.getElementById('seconds');
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                secondsElement.textContent = timeLeft;
+
+                playBeep(800, 100);
+                if (navigator.vibrate) {
+                    navigator.vibrate(150);
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    triggerExplosionEffect();
+                }
+            }, 1000);
+        }
+
+        function playBeep(freq, duration) {
+            try {
+                if (!audioCtx) return;
+                const oscillator = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+                oscillator.connect(gain);
+                gain.connect(audioCtx.destination);
+                oscillator.start();
+                setTimeout(() => oscillator.stop(), duration);
+            } catch (e) {}
+        }
+
+        function triggerExplosionEffect() {
+            if (navigator.vibrate) {
+                navigator.vibrate([500, 100, 500, 100, 1000, 200, 1500]);
+            }
+
+            let flashes = 0;
+            const strobe = setInterval(() => {
+                document.body.style.backgroundColor = (flashes % 2 === 0) ? '#000000' : '#ff0000';
+                flashes++;
+                if (flashes > 14) {
+                    clearInterval(strobe);
+                    document.body.style.backgroundColor = '#990000';
+                    document.getElementById('timer-container').style.display = 'none';
+                    document.getElementById('post-explosion-screen').style.display = 'block';
+                }
+            }, 100);
+
+            try {
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.6);
+                osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 1.2);
+
+                gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                setTimeout(() => osc.stop(), 1500);
+            } catch (e) {}
+        }
+
+        function showContract() {
+            document.getElementById('post-explosion-screen').style.display = 'none';
+            document.getElementById('final-contract-screen').style.display = 'block';
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 500]);
+            }
+            
+            // Включаем твою MP3 песню на максимальной громкости
+            const song = document.getElementById('final-song');
+            song.volume = 1.0;
+            song.play().catch(e => console.log("Audio play blocked"));
+        }
+    </script>
+
+</body>
+</html>
